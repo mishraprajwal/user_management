@@ -206,7 +206,7 @@ class UserService:
         return False
 
     @classmethod
-    async def update_professional_status(session: AsyncSession, user_id: UUID, is_professional: bool) -> User:
+    async def update_professional_status(cls, session: AsyncSession, user_id: UUID, is_professional: bool) -> User:
         user = await session.get(User, user_id)
         if user:
             user.is_professional = is_professional

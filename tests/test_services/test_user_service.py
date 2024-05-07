@@ -1,3 +1,4 @@
+from uuid import uuid4
 from builtins import range
 import pytest
 from sqlalchemy import select
@@ -161,3 +162,60 @@ async def test_unlock_user_account(db_session, locked_user):
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+
+@pytest.mark.asyncio
+async def test_update_professional_status_valid(db_session, user):
+    # Assuming 'is_professional' is initially False
+    user.is_professional = False
+    await db_session.commit()
+
+    # Update professional status to True
+    updated_user = await UserService.update_professional_status(db_session, user.id, True)
+    assert updated_user is not None
+    assert updated_user.is_professional == True
+
+@pytest.mark.asyncio
+async def test_update_professional_status_success(db_session, user):
+    initial_status = False
+    expected_status = True
+    user.is_professional = initial_status
+    await db_session.commit()
+
+    updated_user = await UserService.update_professional_status(db_session, user.id, expected_status)
+    assert updated_user is not None
+    assert updated_user.is_professional == expected_status
+
+@pytest.mark.asyncio
+async def test_update_professional_status_invalid_user(db_session):
+    # Test with a non-existent user ID
+    non_existent_user_id = uuid4()  # type: ignore # Generate a random UUID
+    updated_user = await UserService.update_professional_status(db_session, non_existent_user_id, True)
+    assert updated_user is None  # Expect None because the user does not exist
+
+@pytest.mark.asyncio
+async def test_update_professional_status_no_user_found(db_session):
+    non_existent_user_id = uuid4()
+    result = await UserService.update_professional_status(db_session, non_existent_user_id, True)
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_update_professional_status_no_change(db_session, user):
+    # Set initial professional status
+    user.is_professional = True
+    await db_session.commit()
+
+    # Attempt to update to the same status
+    updated_user = await UserService.update_professional_status(db_session, user.id, True)
+    assert updated_user is not None
+    assert updated_user.is_professional is True
+
+@pytest.mark.asyncio
+async def test_revert_professional_status(db_session, user):
+    # First update the status to True
+    user.is_professional = True
+    await db_session.commit()
+    
+    # Now revert it back to False
+    updated_user = await UserService.update_professional_status(db_session, user.id, False)
+    assert updated_user is not None
+    assert updated_user.is_professional is False
