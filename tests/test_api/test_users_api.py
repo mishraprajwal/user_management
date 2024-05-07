@@ -205,3 +205,11 @@ async def test_list_users_unauthorized(async_client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == 403  # Forbidden, as expected for regular user
+
+@pytest.mark.asyncio
+async def test_change_user_password(async_client, verified_user, user_token):
+    new_password = "NewPassword1234!"
+    headers = {"Authorization": f"Bearer {user_token}"}
+    response = await async_client.post(f"/users/{verified_user.id}/change-password", json={"new_password": new_password}, headers=headers)
+    assert response.status_code == 404
+    assert "password" not in response.json()  # Ensure password isn't exposed
