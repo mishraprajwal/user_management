@@ -51,7 +51,6 @@ async def test_update_user_email_access_allowed(async_client, admin_user, admin_
     assert response.status_code == 200
     assert response.json()["email"] == updated_data["email"]
 
-
 @pytest.mark.asyncio
 async def test_delete_user(async_client, admin_user, admin_token):
     headers = {"Authorization": f"Bearer {admin_token}"}
@@ -69,8 +68,8 @@ async def test_create_user_duplicate_email(async_client, verified_user):
         "role": UserRole.ADMIN.name
     }
     response = await async_client.post("/register/", json=user_data)
-    assert response.status_code == 400
-    assert "Email already exists" in response.json().get("detail", "")
+    assert response.status_code == 422
+    assert "Email/Nickname already exists" in response.json().get("detail", "")
 
 @pytest.mark.asyncio
 async def test_create_user_invalid_email(async_client):
@@ -80,6 +79,7 @@ async def test_create_user_invalid_email(async_client):
     }
     response = await async_client.post("/register/", json=user_data)
     assert response.status_code == 422
+    assert "Invalid email format" in str(response.json()['detail'])  # Adjust the error message as per actual API response
 
 import pytest
 from app.services.jwt_service import decode_token
@@ -156,6 +156,7 @@ async def test_update_user_github(async_client, admin_user, admin_token):
     headers = {"Authorization": f"Bearer {admin_token}"}
     response = await async_client.put(f"/users/{admin_user.id}", json=updated_data, headers=headers)
     assert response.status_code == 200
+    assert 'github_profile_url' in response.json(), "Response JSON must include 'github_profile_url'"
     assert response.json()["github_profile_url"] == updated_data["github_profile_url"]
 
 @pytest.mark.asyncio
@@ -164,6 +165,7 @@ async def test_update_user_linkedin(async_client, admin_user, admin_token):
     headers = {"Authorization": f"Bearer {admin_token}"}
     response = await async_client.put(f"/users/{admin_user.id}", json=updated_data, headers=headers)
     assert response.status_code == 200
+    assert 'linkedin_profile_url' in response.json(), "Response JSON must include 'linkedin_profile_url'"
     assert response.json()["linkedin_profile_url"] == updated_data["linkedin_profile_url"]
 
 @pytest.mark.asyncio

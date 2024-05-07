@@ -31,12 +31,15 @@ class UserBase(BaseModel):
 
     @validator('email', pre=True, always=True)
     def validate_email_domain(cls, v):
-        allowed_domains = ["example.com", "anotherdomain.com"]
+        if v is None:
+            return v  # If no email is provided, skip validation
+        if '@' not in v:
+            raise ValueError("Invalid email format.")
         email_domain = v.split('@')[1]
-        if email_domain not in allowed_domains:
-            raise ValueError(f"Email domain {email_domain} is not allowed. Please use an allowed domain.")
+        if email_domain not in ["example.com", "anotherdomain.com"]:
+            raise ValueError("Email domain not allowed.")
         return v
- 
+
     class Config:
         from_attributes = True
 
