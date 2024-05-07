@@ -204,3 +204,13 @@ class UserService:
             await session.commit()
             return True
         return False
+
+    @classmethod
+    async def update_professional_status(session: AsyncSession, user_id: UUID, is_professional: bool) -> User:
+        user = await session.get(User, user_id)
+        if user:
+            user.is_professional = is_professional
+            session.add(user)
+            await session.commit()
+            return user
+        return None

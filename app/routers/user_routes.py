@@ -33,6 +33,8 @@ from app.services.jwt_service import create_access_token
 from app.utils.link_generation import create_user_links, generate_pagination_links
 from app.dependencies import get_settings
 from app.services.email_service import EmailService
+from app.models.user_model import User
+
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 settings = get_settings()
@@ -255,3 +257,14 @@ async def verify_email(user_id: UUID, token: str, db: AsyncSession = Depends(get
     if await UserService.verify_email_with_token(db, user_id, token):
         return {"message": "Email verified successfully"}
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token")
+
+@router.patch("/users/{user_id}/professional-status", response_model=UserResponse, tags=["User Management"])
+async def update_professional_status(user_id: UUID, is_professional: bool, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if not current_user.is_admin_or_manager():
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+    
+    user = await UserService.update_professional_status(db, user_id, is_professional)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return user
