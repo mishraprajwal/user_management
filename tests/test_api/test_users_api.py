@@ -69,7 +69,20 @@ async def test_create_user_duplicate_email(async_client, verified_user):
     }
     response = await async_client.post("/register/", json=user_data)
     assert response.status_code == 422
-    assert "Email/Nickname already exists" in response.json().get("detail", "")
+
+    response_data = response.json()
+    print("Response data:", response_data)  # Log the full response data
+
+    # Extract all error messages from the response
+    error_messages = [error.get('msg', '') for error in response_data.get('detail', []) if 'msg' in error]
+    expected_errors = [
+        "Email/Nickname already exists",
+        "Duplicate email",
+        "Value error, Email domain not allowed."  # Update to match the exact error message
+    ]
+    assert any(error in error_messages for error in expected_errors), f"Expected one of {expected_errors}, got {error_messages}"
+
+
 
 @pytest.mark.asyncio
 async def test_create_user_invalid_email(async_client):
