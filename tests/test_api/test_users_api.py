@@ -73,16 +73,23 @@ async def test_create_user_duplicate_email(async_client, verified_user):
     response_data = response.json()
     print("Response data:", response_data)  # Log the full response data
 
-    # Extract all error messages from the response
-    error_messages = [error.get('msg', '') for error in response_data.get('detail', []) if 'msg' in error]
+    # Assuming response_data['detail'] might be directly a list of errors or a list within 'detail'
+    if isinstance(response_data['detail'], list):
+        # Extract error messages based on the assumed structure
+        error_messages = [error.get('msg', '') for error in response_data['detail'] if isinstance(error, dict)]
+    else:
+        # If the structure is not as expected, print it out to debug
+        print("Unexpected structure for 'detail':", response_data['detail'])
+        error_messages = []
+
     expected_errors = [
         "Email/Nickname already exists",
         "Duplicate email",
-        "Value error, Email domain not allowed."  # Update to match the exact error message
+        "Value error, Email domain not allowed."
     ]
+
+    # Check if any expected error is actually in the error messages returned by the API
     assert any(error in error_messages for error in expected_errors), f"Expected one of {expected_errors}, got {error_messages}"
-
-
 
 @pytest.mark.asyncio
 async def test_create_user_invalid_email(async_client):
